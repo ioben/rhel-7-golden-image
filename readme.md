@@ -10,7 +10,7 @@ Using Tools
 ```bash
 tools/extract-iso -f ~/Downloads/CentOS-7-x86_64-Minimal-1810.iso tmp/
 
-cp anaconda-ks.cfg tmp/isolinux/ks.cfg
+cp anaconda-ks.cfg tmp/ks.cfg
 
 docker build -t centos-iso:latest .
 docker run -ti -u "$(id -u)" -v "$(pwd):/project" centos-iso:latest /tools/create-iso -f tmp/ centos-7-x86_64-minimal-1810-golden-image.iso
@@ -34,7 +34,7 @@ chmod -R u+w tmp/
 
 sudo umount /mnt
 
-cp anaconda-ks.cfg tmp/isolinux/ks.cfg
+cp anaconda-ks.cfg tmp/ks.cfg
 
 # TODO - Add local packages if wanted
 # cp packages/*.rpm tmp/Packages/.
