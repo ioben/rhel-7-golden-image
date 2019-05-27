@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+import sys
+
+import sh
+import click
+from click import echo, style
+import shutil
+from pathlib import Path
+
+@click.command()
+@click.argument("source", type=click.Path(exists=True, file_okay=False))
+@click.argument("destination", type=click.Path(dir_okay=False))
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite destination ISO if exists")
+def create_iso(source, destination, force):
+    source = Path(source).resolve()
+    destination = Path(destination).resolve()
+
+    if destination.exists():
+        destination = destination
+        if force:
+            echo(style("Overwriting existing ISO '{}'".format(destination), "yellow"))
+            destination.unlink()
+        else:
+            echo(style("Destination path for ISO already exists '{}'".format(destination), "red"))
+            sys.exit(1)
+
+    if sh.grep("inst.ks", "EFI/BOOT/grub.cfg", _ok_code=[0,1], _cwd=source).exit_code == 1:
+        sh.sed("-i", r"s@^\s*linuxefi.*$@\0 inst.ks=cdrom:/ks.cfg@", source / "EFI/BOOT/grub.cfg", _cwd=source)
+
+    sh.mkisofs(
+        "-U", "-r", "-v", "-T", "-J", "-joliet-long",
+        "-volset", "CentOS 7 x86_64",
+        "-A", "CentOS 7 x86_64",
+        "-b", "isolinux/isolinux.bin",
+        "-c", "isolinux/boot.cat",
+        "-no-emul-boot",
+        "-boot-load-size", "4",
+        "-boot-info-table",
+        "-eltorito-alt-boot",
+        "-e", "images/efiboot.img",
+        "-no-emul-boot",
+        "-o", destination,
+        ".",
+        _cwd=source,
+        # Use instead of _fg=True so _cwd works
+        _in=sys.stdin, _out=sys.stdout, _err=sys.stderr
+    )
+
+    sh.isohybrid("--uefi", destination, _fg=True)
+
+    sh.implantisomd5(destination, _fg=True)
+
+if __name__ == "__main__":
+    create_iso()

@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+import sys
+
+import sh
+import click
+import shutil
+from pathlib import Path
+
+def is_mounted(path):
+    mounts = sh.mount().stdout.decode("UTF-8").split("\n")
+    return any("on {}".format(path) in line for line in mounts)
+
+@click.command()
+@click.argument("source", type=click.Path(exists=True))
+@click.argument("destination", type=click.Path())
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite destination if it exists")
+def extract_iso(source, destination, force):
+    mount_path = Path("/mnt").resolve()
+    source_path = Path(source).resolve()
+    dest_path = Path(destination)
+
+    if dest_path.exists():
+        dest_path = dest_path.resolve()
+        if force:
+            click.echo(click.style("Removing destination directory '{}'".format(dest_path), "yellow"))
+            shutil.rmtree(dest_path)
+        else:
+            click.echo(click.style("Destination directory '{}' already exists, exiting".format(dest_path), "red"))
+            return
+
+    if is_mounted(mount_path):
+        click.echo(click.style("Unmounting '{}'".format(mount_path), "yellow"))
+        sh.sudo.umount(mount_path, _fg=True)
+
+    sh.sudo.mount("-o", "loop", source_path, mount_path, _fg=True)
+
+    shutil.copytree(mount_path, dest_path)
+
+    sh.chmod("-R", "u+w", dest_path)
+
+    sh.sudo.umount(mount_path, _fg=True)
+
+if __name__ == "__main__":
+    extract_iso()
