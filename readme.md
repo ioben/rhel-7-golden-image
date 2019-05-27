@@ -72,3 +72,15 @@ mv NEWISO.iso centos-7-x86_64-minimal-1810-golden-image.iso
 
 sudo dd if=centos-7-x86_64-minimal-1810-golden-image.iso of=/dev/DEVICE bs=1M
 ```
+
+
+References
+----------
+
+- https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/anaconda_customization_guide/sect-iso-images#sect-images-repack
+- https://access.redhat.com/discussions/1470263
+- https://gist.github.com/brasey/cb503c6d0344728d15c4
+
+### Writing a kickstart file
+- https://pykickstart.readthedocs.io/en/latest/kickstart-docs.html
+- https://people.centos.org/jperrin/Kickstart2.html
